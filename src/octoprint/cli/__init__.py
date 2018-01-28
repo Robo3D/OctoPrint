@@ -7,6 +7,7 @@ __copyright__ = "Copyright (C) 2015 The OctoPrint Project - Released under terms
 
 import click
 import octoprint
+import sys
 
 #~~ click context
 
@@ -101,13 +102,13 @@ def standard_options(hidden=False):
 
 	options = [
 		factory("--basedir", "-b", type=click.Path(), callback=set_ctx_obj_option, is_eager=True, expose_value=False,
-		        help="Specify the basedir to use for uploads, timelapses etc."),
+		        help="Specify the basedir to use for configs, uploads, timelapses etc."),
 		factory("--config", "-c", "configfile", type=click.Path(), callback=set_ctx_obj_option, is_eager=True, expose_value=False,
 		        help="Specify the config file to use."),
 		factory("--verbose", "-v", "verbosity", count=True, callback=set_ctx_obj_option, is_eager=True, expose_value=False,
-		        help="Increase logging verbosity"),
+		        help="Increase logging verbosity."),
 		factory("--safe", "safe_mode", is_flag=True, callback=set_ctx_obj_option, is_eager=True, expose_value=False,
-		        help="Enable safe mode; disables all third party plugins")
+		        help="Enable safe mode; disables all third party plugins.")
 	]
 
 	return bulk_options(options)
@@ -122,6 +123,7 @@ legacy_options = bulk_options([
 	hidden_option("--daemon", type=click.Choice(["start", "stop", "restart"]), callback=set_ctx_obj_option),
 	hidden_option("--pid", type=click.Path(), default="/tmp/octoprint.pid", callback=set_ctx_obj_option),
 	hidden_option("--iknowwhatimdoing", "allow_root", is_flag=True, callback=set_ctx_obj_option),
+	hidden_option("--ignore-blacklist", "ignore_blacklist", is_flag=True, callback=set_ctx_obj_option)
 ])
 """Legacy options available directly on the "octoprint" command in earlier versions.
    Kept available for reasons of backwards compatibility, but hidden from the
@@ -134,9 +136,10 @@ from .plugins import plugin_commands
 from .dev import dev_commands
 from .client import client_commands
 from .config import config_commands
+from .analysis import analysis_commands
 
 @click.group(name="octoprint", invoke_without_command=True, cls=click.CommandCollection,
-             sources=[server_commands, plugin_commands, dev_commands, client_commands, config_commands])
+             sources=[server_commands, plugin_commands, dev_commands, client_commands, config_commands, analysis_commands])
 @standard_options()
 @legacy_options
 @click.version_option(version=octoprint.__version__, allow_from_autoenv=False)
@@ -159,8 +162,11 @@ def octo(ctx, **kwargs):
 			           "start|stop|restart\" is deprecated, please use "
 			           "\"octoprint daemon start|stop|restart\" from now on")
 
-			from octoprint.cli.server import daemon_command
-			ctx.invoke(daemon_command, command=daemon, **kwargs)
+			if sys.platform == "win32" or sys.platform == "darwin":
+				click.echo("Sorry, daemon mode is not supported under your operating system right now")
+			else:
+				from octoprint.cli.server import daemon_command
+				ctx.invoke(daemon_command, command=daemon, **kwargs)
 		else:
 			click.echo("Starting the server via \"octoprint\" is deprecated, "
 			           "please use \"octoprint serve\" from now on.")
