@@ -1013,56 +1013,15 @@ class MachineCom(object):
 		if not self._currentFile:
 			return
 
-<<<<<<< HEAD
-		if not pause and self.isPaused() and not self._pause_lock:
-			if self._pauseWaitStartTime:
-				self._pauseWaitTimeLost = self._pauseWaitTimeLost + (time.time() - self._pauseWaitStartTime)
-				self._pauseWaitStartTime = None
-
-			self._changeState(self.STATE_PRINTING)
-			self._callback.on_comm_print_job_resumed()
-
-			if self.isSdFileSelected():
-				self.sendCommand("M24")
-				self.sendCommand("M27")
-			else:
-				line = self._getNext()
-				if line is not None:
-					self.sendCommand(line)
-=======
 		with self._jobLock:
 			if not pause and self.isPaused():
 				if self._pauseWaitStartTime:
 					self._pauseWaitTimeLost = self._pauseWaitTimeLost + (time.time() - self._pauseWaitStartTime)
 					self._pauseWaitStartTime = None
->>>>>>> foosel/master
 
 				self._changeState(self.STATE_PRINTING)
 				self._callback.on_comm_print_job_resumed()
 
-<<<<<<< HEAD
-		elif self._pause_lock:
-			self._fire_unpause = pause
-
-		elif pause and self.isPrinting():
-			if not self._pauseWaitStartTime:
-				self._pauseWaitStartTime = time.time()
-
-			self._changeState(self.STATE_PAUSED)
-			if self.isSdFileSelected():
-				self.sendCommand("M25") # pause print
-
-			def _on_M400_sent():
-				# we don't call on_print_job_paused on our callback here
-				# because we do this only after our M114 has been answered
-				# by the firmware
-				self._record_pause_position = True
-				self.sendCommand("M114")
-
-			self.sendCommand("M400", on_sent=_on_M400_sent)
-			self._pause_lock = True
-			self._fire_unpause = True
-=======
 				if self.isSdFileSelected():
 					self.sendCommand("M24")
 					self.sendCommand("M27")
@@ -1093,7 +1052,6 @@ class MachineCom(object):
 					self.sendCommand("M400", on_sent=_on_M400_sent)
 				else:
 					self._pause_preparation_done()
->>>>>>> foosel/master
 
 	def getSdFiles(self):
 		return self._sdFiles
